@@ -1,3 +1,0 @@
-/home/utyfull/Desktop/labs/OOP_labs/lab1/build/CMakeFiles/lab1.dir
-/home/utyfull/Desktop/labs/OOP_labs/lab1/build/CMakeFiles/edit_cache.dir
-/home/utyfull/Desktop/labs/OOP_labs/lab1/build/CMakeFiles/rebuild_cache.dir
