@@ -3,7 +3,7 @@
 Thumbs.db
 
 # Файлы и каталоги сборки
-/build
+**/build/
 /CMakeFiles
 /CMakeCache.txt
 *.cmake
