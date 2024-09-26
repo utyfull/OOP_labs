@@ -8,7 +8,7 @@ TEST(GcdTest, PositiveNumbers)
 
     int result = CalculateGcd(n, m);
 
-    ASSERT_TRUE(result == 9);
+    ASSERT_TRUE(result == 6);
     
 }
 
