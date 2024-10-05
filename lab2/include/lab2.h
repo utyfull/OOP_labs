@@ -10,6 +10,9 @@
 #include <iomanip>
 #include <string>
 
+unsigned char charToHex(char c);
+char hexToChar(unsigned char c);
+
 class Array {
 protected:
     unsigned char* _digits;
@@ -17,8 +20,8 @@ protected:
     size_t _size;
 
 public:
-    Array(); // Конструктор по умолчанию
-    Array(size_t capacity); // Новый конструктор для инициализации массива определенной вместимости
+    Array(); 
+    Array(size_t capacity); 
     Array(const std::initializer_list<unsigned char>& digits);
     Array(const Array& other);
     Array(Array&& other) noexcept;
