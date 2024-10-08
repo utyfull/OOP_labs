@@ -14,7 +14,7 @@ double Figure::getFigureCenter() const {
         calculateFigureCenter();
         _centerCalculated = true; 
     }
-    return _centerX, _centerY; 
+    return _centerX; 
 }
 
 //Array class methods
