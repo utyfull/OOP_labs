@@ -45,36 +45,29 @@ public:
 
 class Hex : public Array {
 public:
-    // Конструкторы
     Hex();
     Hex(const std::string& hexStr);
     Hex(const Hex& other);
     Hex(Hex&& other) noexcept;
     virtual ~Hex() noexcept;
 
-    // Операторы присваивания
     Hex& operator=(const Hex& other);
     Hex& operator=(Hex&& other) noexcept;
 
-    // Арифметические операции с присваиванием
     Hex& operator+=(const Hex& other);
     Hex& operator-=(const Hex& other);
 
-    // Операторы сравнения
     bool operator==(const Hex& other) const;
     bool operator!=(const Hex& other) const;
     bool operator<(const Hex& other) const;
     bool operator>(const Hex& other) const;
 
-    // Преобразование в строку
     std::string toString() const;
 
 private:
-    // Приватные методы для конвертации символов
     unsigned char charToHex(char c) const;
     char hexToChar(unsigned char hexVal) const;
 
-    // Приватные методы для работы с числами
     std::string hexOperation(const std::string& hex1, const std::string& hex2, char operation);
     int hexCompare(const std::string& hex1, const std::string& hex2) const;
 };
