@@ -1,5 +1,5 @@
-#define LAB5_H
-#ifndef LAB5_H
+// #define LAB5_H
+// #ifndef LAB5_H
 
 #include <memory_resource>
 #include <list>
@@ -171,4 +171,4 @@ public:
 
 
 
-#endif
+// #endif
