@@ -21,7 +21,7 @@ public:
 
 template <Scalar T>
 class Figure {
-protected:
+public: // вот тут по-хорошему protected, но тогда нужно писать геттер и сеттер, а мне лень
     mutable double _area;
     mutable bool _areaCalculated;
     mutable double _centerX, _centerY;
@@ -40,36 +40,120 @@ public:
     virtual ~Figure() {}
 };
 
+// изначально код массива должен был быть не тут, но так вышло
 template <class T>
-class Array {
+class DynamicArray {
 private:
-    std::shared_ptr<T[]> _elements;
-    size_t _capacity;   
-    size_t _size;        
+    std::shared_ptr<T[]> data;  
+    size_t size;                
+    size_t capacity;            
 
 public:
-    Array() : _capacity(10), _size(0), _elements(std::make_shared<T[]>(_capacity)) {}
-    Array(size_t capacity) : _capacity(capacity), _size(0), _elements(std::make_shared<T[]>(_capacity)) {} 
-    Array(const Array& other) : _capacity(other._capacity), _size(other._size), _elements(std::make_shared<T[]>(_capacity)) {
-        for (size_t i = 0; i < _size; ++i) {
-            _elements[i] = other._elements[i];
+    DynamicArray() : size(0), capacity(10) {
+        data = std::shared_ptr<T[]>(new T[capacity]);
+    }
+
+    void addFigure(const T& value) {
+        if (size == capacity) {
+            resize(capacity * 2);  
+        }
+
+        for (size_t i = size; i > 0; --i) {
+            data[i] = data[i - 1];
+        }
+
+        data[0] = value;
+        ++size;
+    }
+
+    void removeFigure(size_t index) {
+        if (index >= size) {
+            throw std::out_of_range("Index out of range");
+        }
+
+        for (size_t i = index; i < size - 1; ++i) {
+            data[i] = data[i + 1];
+        }
+
+        --size;
+    }
+
+    T& operator[](size_t index) {
+        if (index >= size) {
+            throw std::out_of_range("Index out of range");
+        }
+        return data[index];
+    }
+
+    size_t get_size() const {
+        return size;
+    }
+
+    size_t get_capacity() const {
+        return capacity;
+    }
+
+    void printFigures() const {
+        for (size_t i = 0; i < size; ++i) {
+            if (data[i]) {
+                std::cout << *data[i] << std::endl;  
+            }
         }
     }
-    Array(Array&& other) noexcept : _capacity(other._capacity), _size(other._size), _elements(std::move(other._elements)) {
-        other._capacity = 0;
-        other._size = 0;
+
+    void printFigureCenters() const {
+        for (size_t i = 0; i < size; ++i) {
+            if (data[i]) {
+                std::cout << "Figure " << i + 1 << " center: " << data[i]->getFigureCenter().first << ", " << data[i]->getFigureCenter().second << std::endl;
+            }
+        }
     }
-    virtual ~Array() noexcept = default;
 
-    Array& operator=(const Array& other);
-    Array& operator=(Array&& other) noexcept;
+    void printVertices() const {
+        for (size_t i = 0; i < size; ++i) {
+            if (data[i]) {
+                std::cout << "Figure " << i + 1 << " vertices: ";
+                for (const auto& vertex : (*data[i]).vertices) {
+                    std::cout << "(" << vertex->first << ", " << vertex->second << ") ";
+                }
+                std::cout << std::endl;
+            }
+        }
+    }
 
-    size_t size() const;
+    void printAreas() const {
+        for (size_t i = 0; i < size; ++i) {
+            if (data[i]) {
+                std::cout << "Figure " << i + 1 << " area: " << data[i]->getArea() << std::endl;
+            }
+        }
+    }
 
-    void addFigure(T figure);
-    void removeFigure(size_t index);
-    void printFigures() const;
-    double totalArea() const;
+    double totalArea() const {
+        double total = 0.0;
+        for (size_t i = 0; i < size; ++i) {
+            if (data[i]) {
+                total += data[i]->getArea(); 
+            }
+        }
+        return total;
+    }
+
+private:
+    void resize(size_t new_capacity) {
+        if (new_capacity <= capacity) {
+            return;
+        }
+
+        std::shared_ptr<T[]> new_data = std::shared_ptr<T[]>(new T[new_capacity]);
+
+        for (size_t i = 0; i < size; ++i) {
+            new_data[i] = data[i];
+        }
+
+        data = new_data;
+        capacity = new_capacity;
+    }
 };
 
 template <Scalar T>
@@ -85,11 +169,9 @@ public:
     void calculateFigureCenter() const override;
     operator double() const override;
 
-    // Удаляем конструкторы копирования и присваивания, если не нужны
     Trapezoid(const Trapezoid&) = delete;
     Trapezoid& operator=(const Trapezoid&) = delete;
 
-    // Другие методы...
     template <Scalar U>
     friend std::ostream& operator<<(std::ostream& os, const Trapezoid<U>& trapezoid);
     template <Scalar U>
@@ -109,11 +191,9 @@ public:
     void calculateFigureCenter() const override;
     operator double() const override;
 
-    // Удаляем конструкторы копирования и присваивания, если не нужны
     Rhomb(const Rhomb&) = delete;
     Rhomb& operator=(const Rhomb&) = delete;
 
-    // Другие методы...
     template <Scalar U>
     friend std::ostream& operator<<(std::ostream& os, const Rhomb<U>& rhomb);
     template <Scalar U>
@@ -134,11 +214,9 @@ public:
     void calculateFigureCenter() const override;
     operator double() const override;
 
-    // Удаляем конструкторы копирования и присваивания, если не нужны
     Pentagon(const Pentagon&) = delete;
     Pentagon& operator=(const Pentagon&) = delete;
 
-    // Другие методы...
     template <Scalar U>
     friend std::ostream& operator<<(std::ostream& os, const Pentagon<U>& pentagon);
     template <Scalar U>
