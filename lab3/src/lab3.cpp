@@ -1,154 +1,222 @@
 #include "lab3.h"
 
 //Figure class methods
-double Figure::getArea() const {
-    if (!_areaCalculated) {
-        _area = static_cast<double>(*this); 
-        _areaCalculated = true;  
+template <Scalar T>
+T Figure<T>::getArea() const {
+    if (!this->_areaCalculated) {
+        this->_area = static_cast<double>(*this);  // Используем перегрузку оператора приведения типа
+        this->_areaCalculated = true;  
     }
-    return _area;
+    return this->_area;
 }
 
-double Figure::getFigureCenter() const {
-    if (!_centerCalculated) {
-        calculateFigureCenter();
-        _centerCalculated = true; 
+template <Scalar T>
+Point<T> Figure<T>::getFigureCenter() const {
+    if (!this->_centerCalculated) {
+        calculateFigureCenter(); // Вычисление центра фигуры
+        this->_centerCalculated = true; 
     }
-    return _centerX; 
+    return Point<T>(this->_centerX, this->_centerY);  // Возвращаем центр как точку с double координатами
 }
 
 //Array class methods
-Array::Array() : _capacity(10), _size(0) {
-    _elements = new Figure*[_capacity];
-}
-
-Array::Array(size_t capacity) : _capacity(capacity), _size(0) {
-    _elements = new Figure*[_capacity];
-}
-
-Array::~Array() noexcept {
-    for (size_t i = 0; i < _size; ++i) {
-        delete _elements[i];  
-    }
-    delete[] _elements; 
-}
-
-void Array::addFigure(Figure* figure) {
-    if (_size >= _capacity) {
-        _capacity *= 2;
-        Figure** newElements = new Figure*[_capacity];
-        for (size_t i = 0; i < _size; ++i) {
-            newElements[i] = _elements[i];
+template <class T>
+void Array<T>::addFigure(T figure) {
+        if (_size >= _capacity) {
+            throw std::overflow_error("Array is full");
         }
-        delete[] _elements;
-        _elements = newElements;
+        _elements[_size++] = figure;  // Добавляем фигуру и увеличиваем размер
     }
-    _elements[_size++] = figure; 
-}
 
-void Array::removeFigure(size_t index) {
+template <class T>
+void Array<T>::removeFigure(size_t index) {
     if (index < _size) {
-        delete _elements[index]; 
         for (size_t i = index; i < _size - 1; ++i) {
-            _elements[i] = _elements[i + 1]; 
+            _elements[i] = std::move(_elements[i + 1]); // Перемещаем элементы влево
         }
-        --_size; 
+        --_size; // Уменьшаем размер
     }
 }
 
-void Array::printFigures() const {
+template <class T>
+void Array<T>::printFigures() const {
     for (size_t i = 0; i < _size; ++i) {
-        std::cout << *_elements[i] << std::endl; 
+        if (_elements[i]) {
+            std::cout << *_elements[i] << std::endl; // Выводим фигуры
+        }
     }
 }
 
-double Array::totalArea() const {
+template <class T>
+double Array<T>::totalArea() const {
     double total = 0.0;
     for (size_t i = 0; i < _size; ++i) {
-        total += _elements[i]->getArea(); 
+        if (_elements[i]) {
+            total += _elements[i]->getArea(); // Суммируем площади
+        }
     }
     return total;
 }
 
+template <class T>
+size_t Array<T>::size() const {
+    return _size;
+}
+
 //Trapezoid class methods 
-void Trapezoid::calculateFigureCenter() const {
-    _centerX = (__x1 + __x2 + __x3 + __x4) / 4;
-    _centerY = (__y1 + __y2 + __y3 + __y4) / 4;
-    _centerCalculated = true; 
+template <Scalar T>
+void Trapezoid<T>::calculateFigureCenter() const {
+    // Среднее арифметическое координат четырех вершин
+    this->_centerX = (this->vertices[0]->first + this->vertices[1]->first +
+                      this->vertices[2]->first + this->vertices[3]->first) / 4;
+    this->_centerY = (this->vertices[0]->second + this->vertices[1]->second +
+                      this->vertices[2]->second + this->vertices[3]->second) / 4;
+    this->_centerCalculated = true;
 }
 
-Trapezoid::operator double() const {
-    return 0.5 * (abs(__y2 - __y1) + abs(__y3 - __y4)) * abs(__x2 - __x1);
+template <Scalar T>
+Trapezoid<T>::operator double() const {
+    // Площадь трапеции: 0.5 * (высота1 + высота2) * ширина
+    T height1 = std::abs(this->vertices[1]->second - this->vertices[0]->second);
+    T height2 = std::abs(this->vertices[3]->second - this->vertices[2]->second);
+    T width = std::abs(this->vertices[1]->first - this->vertices[0]->first);
+    return 0.5 * (height1 + height2) * width;
 }
 
-std::ostream& operator<<(std::ostream& os, const Trapezoid& trapezoid) {
-    os << "Trapezoid: ((" << trapezoid.__x1 << ", " << trapezoid.__y1 << "), ("
-       << trapezoid.__x2 << ", " << trapezoid.__y2 << "), ("
-       << trapezoid.__x3 << ", " << trapezoid.__y3 << "), ("
-       << trapezoid.__x4 << ", " << trapezoid.__y4 << "))";
+template <Scalar U>
+std::ostream& operator<<(std::ostream& os, const Trapezoid<U>& trapezoid) {
+    os << "Trapezoid: ((" << trapezoid.vertices[0]->first << ", " << trapezoid.vertices[0]->second << "), ("
+       << trapezoid.vertices[1]->first << ", " << trapezoid.vertices[1]->second << "), ("
+       << trapezoid.vertices[2]->first << ", " << trapezoid.vertices[2]->second << "), ("
+       << trapezoid.vertices[3]->first << ", " << trapezoid.vertices[3]->second << "))";
     return os;
 }
 
-std::istream& operator>>(std::istream& is, Trapezoid& trapezoid) {
-    is >> trapezoid.__x1 >> trapezoid.__y1
-       >> trapezoid.__x2 >> trapezoid.__y2
-       >> trapezoid.__x3 >> trapezoid.__y3
-       >> trapezoid.__x4 >> trapezoid.__y4;
+template <Scalar U>
+std::istream& operator>>(std::istream& is, Trapezoid<U>& trapezoid) {
+    // Ввод координат четырех точек
+    for (auto& vertex : trapezoid.vertices) {
+        is >> vertex->first >> vertex->second;
+    }
     return is;
 }
 
 //Rhomb class methods
-void Rhomb::calculateFigureCenter() const {
-    _centerX = (__x1 + __x2 + __x3 + __x4) / 4;
-    _centerY = (__y1 + __y2 + __y3 + __y4) / 4;
-    _centerCalculated = true;
+template <Scalar T>
+void Rhomb<T>::calculateFigureCenter() const {
+    // Среднее арифметическое координат четырех вершин
+    this->_centerX = (this->vertices[0]->first + this->vertices[1]->first +
+                      this->vertices[2]->first + this->vertices[3]->first) / 4;
+    this->_centerY = (this->vertices[0]->second + this->vertices[1]->second +
+                      this->vertices[2]->second + this->vertices[3]->second) / 4;
+    this->_centerCalculated = true;
 }
 
-Rhomb::operator double() const {
-    return (abs(__x1 - __x3) * abs(__y2 - __y4));
+template <Scalar T>
+Rhomb<T>::operator double() const {
+    // Площадь ромба: (диагональ1 * диагональ2) / 2
+    T diagonal1 = std::abs(this->vertices[0]->first - this->vertices[2]->first);
+    T diagonal2 = std::abs(this->vertices[1]->second - this->vertices[3]->second);
+    return (diagonal1 * diagonal2) / 2;
 }
 
-std::ostream& operator<<(std::ostream& os, const Rhomb& rhomb) {
-    os << "Rhomb: ((" << rhomb.__x1 << ", " << rhomb.__y1 << "), ("
-       << rhomb.__x2 << ", " << rhomb.__y2 << "), ("
-       << rhomb.__x3 << ", " << rhomb.__y3 << "), ("
-       << rhomb.__x4 << ", " << rhomb.__y4 << "))";
+template <Scalar U>
+std::ostream& operator<<(std::ostream& os, const Rhomb<U>& rhomb) {
+    os << "Rhomb: ((" << rhomb.vertices[0]->first << ", " << rhomb.vertices[0]->second << "), ("
+       << rhomb.vertices[1]->first << ", " << rhomb.vertices[1]->second << "), ("
+       << rhomb.vertices[2]->first << ", " << rhomb.vertices[2]->second << "), ("
+       << rhomb.vertices[3]->first << ", " << rhomb.vertices[3]->second << "))";
     return os;
 }
 
-std::istream& operator>>(std::istream& is, Rhomb& rhomb) {
-    is >> rhomb.__x1 >> rhomb.__y1
-       >> rhomb.__x2 >> rhomb.__y2
-       >> rhomb.__x3 >> rhomb.__y3
-       >> rhomb.__x4 >> rhomb.__y4;
+template <Scalar U>
+std::istream& operator>>(std::istream& is, Rhomb<U>& rhomb) {
+    // Ввод координат четырех точек
+    for (auto& vertex : rhomb.vertices) {
+        is >> vertex->first >> vertex->second;
+    }
     return is;
 }
 
 //Pentagon class methods
-void Pentagon::calculateFigureCenter() const {
-    _centerX = (__x1 + __x2 + __x3 + __x4 + __x5) / 5;
-    _centerY = (__y1 + __y2 + __y3 + __y4 + __y5) / 5;
-    _centerCalculated = true;
+template <Scalar T>
+void Pentagon<T>::calculateFigureCenter() const {
+    // Среднее арифметическое координат пяти вершин
+    this->_centerX = (this->vertices[0]->first + this->vertices[1]->first + 
+                      this->vertices[2]->first + this->vertices[3]->first + 
+                      this->vertices[4]->first) / 5;
+    this->_centerY = (this->vertices[0]->second + this->vertices[1]->second + 
+                      this->vertices[2]->second + this->vertices[3]->second + 
+                      this->vertices[4]->second) / 5;
+    this->_centerCalculated = true;
 }
 
-Pentagon::operator double() const {
-    return (5 * __x1 * __y1) / 2; 
+template <Scalar T>
+Pentagon<T>::operator double() const {
+    // Площадь пятиугольника (приблизительная формула, например, через площадь треугольников)
+    // Здесь используем пример формулы для площади регулярного пятиугольника
+    T side = std::abs(this->vertices[0]->first - this->vertices[1]->first); // Пример: длина стороны
+    return (5 * side * side) / (4 * std::tan(M_PI / 5)); // Площадь через сторону
 }
 
-std::ostream& operator<<(std::ostream& os, const Pentagon& pentagon) {
-    os << "Pentagon: ((" << pentagon.__x1 << ", " << pentagon.__y1 << "), ("
-       << pentagon.__x2 << ", " << pentagon.__y2 << "), ("
-       << pentagon.__x3 << ", " << pentagon.__y3 << "), ("
-       << pentagon.__x4 << ", " << pentagon.__y4 << "), ("
-       << pentagon.__x5 << ", " << pentagon.__y5 << "))";
+template <Scalar U>
+std::ostream& operator<<(std::ostream& os, const Pentagon<U>& pentagon) {
+    os << "Pentagon: ((" << pentagon.vertices[0]->first << ", " << pentagon.vertices[0]->second << "), ("
+       << pentagon.vertices[1]->first << ", " << pentagon.vertices[1]->second << "), ("
+       << pentagon.vertices[2]->first << ", " << pentagon.vertices[2]->second << "), ("
+       << pentagon.vertices[3]->first << ", " << pentagon.vertices[3]->second << "), ("
+       << pentagon.vertices[4]->first << ", " << pentagon.vertices[4]->second << "))";
     return os;
 }
 
-std::istream& operator>>(std::istream& is, Pentagon& pentagon) {
-    is >> pentagon.__x1 >> pentagon.__y1
-       >> pentagon.__x2 >> pentagon.__y2
-       >> pentagon.__x3 >> pentagon.__y3
-       >> pentagon.__x4 >> pentagon.__y4
-       >> pentagon.__x5 >> pentagon.__y5;
+template <Scalar U>
+std::istream& operator>>(std::istream& is, Pentagon<U>& pentagon) {
+    // Ввод координат пяти точек
+    for (auto& vertex : pentagon.vertices) {
+        is >> vertex->first >> vertex->second;
+    }
     return is;
+}
+
+int main() {
+    // Создаем массив для хранения фигур, используя shared_ptr для управления памятью
+    Array<std::shared_ptr<Figure<double>>> array(10); 
+
+    // Создаем фигуры с использованием shared_ptr
+    auto trapezoid = std::make_shared<Trapezoid<double>>();
+    auto rhomb = std::make_shared<Rhomb<double>>();
+    auto pentagon = std::make_shared<Pentagon<double>>();
+
+    // Ввод координат для трапеции
+    std::cout << "Введите координаты для трапеции (x1 y1 x2 y2 x3 y3 x4 y4): ";
+    std::cin >> *trapezoid; 
+
+    // Ввод координат для ромба
+    std::cout << "Введите координаты для ромба (x1 y1 x2 y2 x3 y3 x4 y4): ";
+    std::cin >> *rhomb;
+
+    // Ввод координат для пятиугольника
+    std::cout << "Введите координаты для пятиугольника (x1 y1 x2 y2 x3 y3 x4 y4 x5 y5): ";
+    std::cin >> *pentagon;
+
+    std::cout << "try to add\n";
+    // Добавляем фигуры в массив
+    array.addFigure(trapezoid); // Передаем указатели на фигуры
+    array.addFigure(rhomb);
+    array.addFigure(pentagon);
+    std::cout << "try to use\n";
+    // Печатаем все фигуры
+    std::cout << "Все фигуры в массиве:" << std::endl;
+    array.printFigures();
+
+    // Выводим общую площадь фигур в массиве
+    std::cout << "Общая площадь фигур в массиве: " << array.totalArea() << std::endl;
+
+    // Удаляем фигуру с индексом 1
+    array.removeFigure(1);
+
+    std::cout << "После удаления фигуры с индексом 1:" << std::endl;
+    array.printFigures();
+
+    return 0;
 }

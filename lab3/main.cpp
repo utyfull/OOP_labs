@@ -1,33 +1,43 @@
 #include "lab3.h"
 
-int main() {
-    Array array(10);  
+// int main() {
+//     // Создаем массив для хранения фигур, используя shared_ptr для управления памятью
+//     Array<std::shared_ptr<Figure<double>>> array(10); 
 
-    Trapezoid* trapezoid = new Trapezoid();
-    Rhomb* rhomb = new Rhomb();
-    Pentagon* pentagon = new Pentagon();
+//     // Создаем фигуры с использованием shared_ptr
+//     auto trapezoid = std::make_shared<Trapezoid<double>>();
+//     auto rhomb = std::make_shared<Rhomb<double>>();
+//     auto pentagon = std::make_shared<Pentagon<double>>();
 
-    std::cout << "Введите координаты для трапеции (x1 y1 x2 y2 x3 y3 x4 y4): ";
-    std::cin >> *trapezoid; 
+//     // Ввод координат для трапеции
+//     std::cout << "Введите координаты для трапеции (x1 y1 x2 y2 x3 y3 x4 y4): ";
+//     std::cin >> *trapezoid; 
 
-    std::cout << "Введите координаты для ромба (x1 y1 x2 y2 x3 y3 x4 y4): ";
-    std::cin >> *rhomb;
+//     // Ввод координат для ромба
+//     std::cout << "Введите координаты для ромба (x1 y1 x2 y2 x3 y3 x4 y4): ";
+//     std::cin >> *rhomb;
 
-    std::cout << "Введите координаты для пятиугольника (x1 y1 x2 y2 x3 y3 x4 y4 x5 y5): ";
-    std::cin >> *pentagon;
+//     // Ввод координат для пятиугольника
+//     std::cout << "Введите координаты для пятиугольника (x1 y1 x2 y2 x3 y3 x4 y4 x5 y5): ";
+//     std::cin >> *pentagon;
 
-    array.addFigure(trapezoid);
-    array.addFigure(rhomb);
-    array.addFigure(pentagon);
+//     // Добавляем фигуры в массив
+//     array.addFigure(trapezoid); // Передаем указатели на фигуры
+//     array.addFigure(rhomb);
+//     array.addFigure(pentagon);
 
-    array.printFigures();
+//     // Печатаем все фигуры
+//     std::cout << "Все фигуры в массиве:" << std::endl;
+//     array.printFigures();
 
-    std::cout << "Общая площадь фигур в массиве: " << array.totalArea() << std::endl;
+//     // Выводим общую площадь фигур в массиве
+//     std::cout << "Общая площадь фигур в массиве: " << array.totalArea() << std::endl;
 
-    array.removeFigure(1);
+//     // Удаляем фигуру с индексом 1
+//     array.removeFigure(1);
 
-    std::cout << "После удаления фигуры с индексом 1:" << std::endl;
-    array.printFigures();
+//     std::cout << "После удаления фигуры с индексом 1:" << std::endl;
+//     array.printFigures();
 
-    return 0;
-}
+//     return 0;
+// }
