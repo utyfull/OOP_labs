@@ -152,14 +152,14 @@ int main() {
     array.addFigure(pentagon);
 
     std::cout << "Все фигуры в массиве:" << std::endl;
-    array. printFigureCenters();
+    array.printVertices();
 
     std::cout << "Общая площадь фигур в массиве: " << array.totalArea() << std::endl;
 
     array.removeFigure(1);
 
     std::cout << "После удаления фигуры с индексом 1:" << std::endl;
-    array. printFigureCenters();
+    array.printVertices();
 
     return 0;
 }
