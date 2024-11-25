@@ -18,3 +18,9 @@ add_executable(test_lab3 lab3_test.cpp ../lab3/src/lab3.cpp ../lab3/include/lab3
 target_link_libraries(test_lab3 PRIVATE GTest::GTest)
 target_include_directories(test_lab3 PRIVATE ../lab3/include)
 add_test(NAME test_lab3 COMMAND test_lab3)
+
+
+add_executable(test_lab6 lab6_test.cpp ../lab6/src/lab6.cpp ../lab6/include/lab6.h)
+target_link_libraries(test_lab6 PRIVATE GTest::GTest)
+target_include_directories(test_lab6 PRIVATE ../lab6/include)
+add_test(NAME test_lab6 COMMAND test_lab6)
