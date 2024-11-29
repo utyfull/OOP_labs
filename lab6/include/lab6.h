@@ -5,6 +5,7 @@
 #include <cmath>
 #include <map>
 #include <cassert>
+#include <algorithm>
 
 // *** Абстрактный класс NPC ***
 class NPC {
@@ -16,7 +17,7 @@ public:
     virtual int getY() const = 0;
     virtual void accept(class NPCVisitor& visitor) = 0;
     virtual bool canFight(const NPC& other) const = 0;
-    virtual bool fight(NPC& other) = 0; // Возвращает true, если NPC выжил
+    virtual bool fight(NPC& other) = 0; 
 };
 
 // *** Классы-конкретные NPC ***
@@ -31,12 +32,12 @@ public:
     int getY() const override { return y; }
     void accept(NPCVisitor& visitor) override;
     bool canFight(const NPC& other) const override {
-        return other.getType() != "Bittern"; // Выпь не участвует в сражениях
+        return other.getType() != "Bittern"; 
     }
     bool fight(NPC& other) override {
-        if (other.getType() == "Bear") return false; // Ничья, оба погибают
-        if (other.getType() == "Desman") return false; // Выхухоль побеждает
-        return true; // Выживает
+        if (other.getType() == "Bear") return false; 
+        if (other.getType() == "Desman") return false; 
+        return true; 
     }
 };
 
@@ -65,10 +66,10 @@ public:
     int getY() const override { return y; }
     void accept(NPCVisitor& visitor) override;
     bool canFight(const NPC& other) const override {
-        return other.getType() == "Bear"; // Выхухоль сражается только с медведями
+        return other.getType() == "Bear"; 
     }
     bool fight(NPC& other) override {
-        return true; // Выхухоль всегда побеждает
+        return true; 
     }
 };
 
@@ -83,39 +84,32 @@ class BattleVisitor : public NPCVisitor {
     int range;
 public:
     BattleVisitor(std::vector<std::shared_ptr<NPC>>& npcs, int range) : npcs(npcs), range(range) {}
-    void visit(NPC& npc) override {
-        std::vector<std::shared_ptr<NPC>> toRemove;
 
-        // Сначала собираем всех NPC, которых нужно удалить
+    void removeDefeated(const std::vector<std::shared_ptr<NPC>>& defeatedNPCs) {
+        npcs.erase(std::remove_if(npcs.begin(), npcs.end(),
+            [&defeatedNPCs](const std::shared_ptr<NPC>& npc) {
+                return std::find(defeatedNPCs.begin(), defeatedNPCs.end(), npc) != defeatedNPCs.end();
+            }), 
+            npcs.end());
+    }
+
+    void visit(NPC& npc) override {
+        std::vector<std::shared_ptr<NPC>> defeatedNPCs;
+
         for (auto& other : npcs) {
-            if (&npc == other.get()) continue;
-            int dist = std::sqrt(std::pow(npc.getX() - other->getX(), 2) + std::pow(npc.getY() - other->getY(), 2));
+            if (&npc == other.get()) continue; 
+            int dist = std::sqrt(std::pow(npc.getX() - other->getX(), 2) + 
+                                std::pow(npc.getY() - other->getY(), 2));
             if (dist <= range && npc.canFight(*other)) {
                 if (!npc.fight(*other)) {
-                    toRemove.push_back(other);
+                    defeatedNPCs.push_back(other); 
                 }
             }
         }
 
-        // Удаляем NPC из npcs, используя итераторы
-        for (auto it = npcs.begin(); it != npcs.end();) {
-            bool shouldRemove = false;
-
-            // Проверяем, содержится ли текущий NPC в списке toRemove
-            for (const auto& remove : toRemove) {
-                if (*it == remove) {
-                    shouldRemove = true;
-                    break;
-                }
-            }
-
-            if (shouldRemove) {
-                it = npcs.erase(it); // Удаляем элемент и обновляем итератор
-            } else {
-                ++it; // Переходим к следующему элементу
-            }
-        }
+        removeDefeated(defeatedNPCs);
     }
+
 };
 
 // Реализация метода accept
@@ -219,8 +213,9 @@ public:
 
     void startBattle(int range) {
         BattleVisitor battleVisitor(npcs, range);
-        for (auto& npc : npcs) {
-            npc->accept(battleVisitor);
+        for (auto it = npcs.begin(); it != npcs.end();) {
+            (*it)->accept(battleVisitor);
+            ++it; 
         }
     }
 };
