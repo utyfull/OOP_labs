@@ -1,85 +1,90 @@
 #include "lab6.h"
 
 int main() {
-    // Тест 1: Проверка создания NPC
-    std::shared_ptr<NPC> bear = std::make_shared<Bear>("Grizzly", 5, 5);
-    std::shared_ptr<NPC> bittern = std::make_shared<Bittern>("Bittern", 10, 10);
-    std::shared_ptr<NPC> desman = std::make_shared<Desman>("Desman", 15, 15);
-
-    std::cout << "Тест 1: Создание NPC\n";
-    std::cout << bear->getType() << " " << bear->getName() << " (" << bear->getX() << ", " << bear->getY() << ")\n";
-    std::cout << bittern->getType() << " " << bittern->getName() << " (" << bittern->getX() << ", " << bittern->getY() << ")\n";
-    std::cout << desman->getType() << " " << desman->getName() << " (" << desman->getX() << ", " << desman->getY() << ")\n";
-
-    // Тест 2: Сохранение и загрузка NPC из файла
     DungeonEditor editor;
-    editor.addNPC(bear);
-    editor.addNPC(bittern);
-    editor.addNPC(desman);
+    
+    // Добавим наблюдателей
+    editor.addObserver(std::make_shared<ConsoleObserver>());
+    editor.addObserver(std::make_shared<FileObserver>("game_log.txt"));
 
-    std::cout << "\nТест 2: Сохранение NPC в файл\n";
-    editor.saveToFile("npcs.txt");
+    // Демонстрация сохранения/загрузки.
+    // Сначала создадим несколько NPC вручную:
+    editor.addNPC(std::make_shared<Bear>("Bear_Manual", 10, 10));
+    editor.addNPC(std::make_shared<Bittern>("Bittern_Manual", 20, 20));
+    editor.addNPC(std::make_shared<Desman>("Desman_Manual", 30, 30));
+    
+    // Сохраним текущее состояние в файл
+    editor.saveToFile("initial_state.txt");
 
-    std::cout << "\nТест 2: Загрузка NPC из файла\n";
-    DungeonEditor loadedEditor;
-    loadedEditor.loadFromFile("npcs.txt");
-    loadedEditor.printAll();
+    // Очистим NPC из редактора и загрузим из файла для демонстрации
+    editor.getNPCs().clear();
+    editor.loadFromFile("initial_state.txt");
 
-    // Тест 3: Проверка наблюдателей
-    std::shared_ptr<Observer> consoleObserver = std::make_shared<ConsoleObserver>();
-    std::shared_ptr<Observer> fileObserver = std::make_shared<FileObserver>("events.log");
+    std::cout << "NPCs after loading from file:" << std::endl;
+    editor.printAll();
+    std::cout << "-----" << std::endl;
+    
+    // Теперь создадим 50 случайных NPC для игры
+    {
+        std::mt19937 rng(std::random_device{}());
+        std::uniform_int_distribution<int> distX(0, 99);
+        std::uniform_int_distribution<int> distY(0, 99);
+        std::vector<std::string> possibleTypes = {"Медведь", "Выпь", "Выхухоль"};
+        std::uniform_int_distribution<int> typeDist(0,(int)possibleTypes.size()-1);
 
-    editor.addObserver(consoleObserver);
-    editor.addObserver(fileObserver);
+        for (int i = 0; i < 50; ++i) {
+            std::string t = possibleTypes[typeDist(rng)];
+            int x = distX(rng);
+            int y = distY(rng);
+            if (t == "Медведь") {
+                editor.addNPC(std::make_shared<Bear>("Bear_Rand_"+std::to_string(i), x, y));
+            } else if (t == "Выпь") {
+                editor.addNPC(std::make_shared<Bittern>("Bittern_Rand_"+std::to_string(i), x, y));
+            } else {
+                editor.addNPC(std::make_shared<Desman>("Desman_Rand_"+std::to_string(i), x, y));
+            }
+        }
+    }
 
-    std::cout << "\nТест 3: Наблюдатели\n";
-    editor.notifyObservers("NPCs have been loaded and saved.");
+    gNPCsPtr = &editor.getNPCs();
 
-    // Тест 4: Бои между NPC
-    std::cout << "\nТест 4: Проведение боев\n";
-    editor.startBattle(20);
+    // Перед стартом игры выведем состояние всех NPC
+    std::cout << "NPCs at the start of the game:" << std::endl;
+    editor.printAll();
+    std::cout << "-----" << std::endl;
 
-    // Тест 5: Бой между NPC с близким расстоянием
-    std::cout << "\nТест 5: Бой на близком расстоянии\n";
-    editor.addNPC(std::make_shared<Bear>("Bear1", 1, 1));
-    editor.addNPC(std::make_shared<Desman>("Desman1", 2, 2)); // В пределах боя
-    editor.addNPC(std::make_shared<Bittern>("Bittern1", 10, 10)); // Вне зоны боя
-    editor.startBattle(3);
+    // Запускаем потоки
+    std::thread fightT(fightThreadFunc);
+    std::thread moveT(moveThreadFunc);
+    std::thread printT(printThreadFunc);
 
-    // Тест 6: Сражения на дальнем расстоянии
-    std::cout << "\nТест 6: Бой на дальнем расстоянии\n";
-    editor.addNPC(std::make_shared<Bear>("Bear2", 50, 50));
-    editor.addNPC(std::make_shared<Desman>("Desman2", 45, 45)); // В пределах боя
-    editor.startBattle(10);
+    // Игра длится 30 секунд
+    std::this_thread::sleep_for(std::chrono::seconds(30));
 
-    // Тест 7: Удаление NPC после боя
-    std::cout << "\nТест 7: Проверка удаления NPC после боя\n";
-    editor.addNPC(std::make_shared<Bear>("Bear3", 5, 5));
-    editor.addNPC(std::make_shared<Desman>("Desman3", 6, 6));
-    editor.startBattle(2);
+    // Останавливаем игру
+    gameRunning = false;
+    {
+        std::lock_guard<std::mutex> qLock(fightQueueMutex);
+        fightThreadRunning = false;
+        fightQueueCV.notify_all();
+    }
 
-    // Тест 8: Проверка работы разных типов взаимодействий
-    std::cout << "\nТест 8: Проверка взаимодействий между типами NPC\n";
-    std::shared_ptr<NPC> newBear = std::make_shared<Bear>("NewBear", 10, 10);
-    std::shared_ptr<NPC> newDesman = std::make_shared<Desman>("NewDesman", 12, 12);
-    std::shared_ptr<NPC> newBittern = std::make_shared<Bittern>("NewBittern", 15, 15);
-    editor.addNPC(newBear);
-    editor.addNPC(newDesman);
-    editor.addNPC(newBittern);
-    editor.startBattle(5);
+    moveT.join();
+    printT.join();
+    fightT.join();
 
-    // Тест 9: Проверка сохранения после боев
-    std::cout << "\nТест 9: Сохранение NPC после боев\n";
-    editor.saveToFile("updated_npcs.txt");
+    // Итог: список выживших
+    {
+        std::shared_lock<std::shared_mutex> lock(npcsMutex);
+        std::cout << "Survivors after 30 seconds:" << std::endl;
+        for (auto &npc : *gNPCsPtr) {
+            if (npc->isAlive()) {
+                std::cout << npc->getType() << " " << npc->getName() << " ("
+                          << npc->getX() << ", " << npc->getY() << ")\n";
+            }
+        }
+    }
 
-    // Тест 10: Проверка повторной загрузки
-    std::cout << "\nТест 10: Повторная загрузка NPC из файла\n";
-    DungeonEditor reloadEditor;
-    reloadEditor.loadFromFile("updated_npcs.txt");
-    reloadEditor.printAll();
-
-    // Все тесты завершены
-    std::cout << "\nВсе тесты завершены.\n";
-
+    std::cout << "Game finished. Logs are saved in game_log.txt" << std::endl;
     return 0;
 }
